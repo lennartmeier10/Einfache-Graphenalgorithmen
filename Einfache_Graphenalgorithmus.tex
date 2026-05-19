@@ -1,0 +1,491 @@
+\documentclass[12pt]{article}
+
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{csquotes}
+\usepackage{bbm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{ulem}
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\usepackage{cleveref}
+\usepackage{setspace}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{cancel}
+\usepackage{pdfpages}
+\usepackage{array,multirow}
+\usepackage{makecell}
+\usepackage{subcaption}
+\usepackage{tikz}
+
+\usetikzlibrary{positioning}
+
+\usepackage[style=numeric]{biblatex}
+\addbibresource{literatur.bib}
+
+\onehalfspacing
+\allowdisplaybreaks
+
+\newcommand{\N}{\mathbbm{N}}
+\newcommand{\Z}{\mathbbm{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Q}{\mathbb{Q}}
+
+\newtheorem{satz}{Satz}[section]
+\newtheorem{definition}[satz]{Definition}
+\newtheorem{lemma}[satz]{Lemma}
+\newtheorem{beispiel}[satz]{Beispiel}
+\newtheorem{algorithmus}[satz]{Algorithmus}
+\newtheorem{proposition}[satz]{Proposition}
+\newtheorem{korollar}[satz]{Korollar}
+
+\title{
+Einfache Graphenalgorithmen\\[0.5em]
+\Large Eine Ausarbeitung zum Vortrag\\
+Proseminar Kombinatorik\\
+Sommersemester 2026
+}
+
+\author{
+Lennart Meier\\
+\url{Lennart.meier05@gmail.com}
+}
+
+\date{Vortrag am 26.05.2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\newpage
+
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+
+\section{Einleitung}
+
+Graphen gehören zu den wichtigsten Strukturen der diskreten Mathematik und der Informatik.
+Sie dienen dazu, Beziehungen zwischen Objekten darzustellen.
+Viele praktische Probleme lassen sich durch Graphen modellieren.
+
+Typische Anwendungen sind:
+
+\begin{itemize}
+    \item Straßennetze und Navigation,
+    \item soziale Netzwerke,
+    \item Kommunikationsnetze,
+    \item Suchmaschinen,
+    \item Projektplanung und Scheduling.
+\end{itemize}
+
+Ziel dieser Ausarbeitung ist die Vorstellung grundlegender Graphenalgorithmen.
+Dabei stehen insbesondere die Tiefensuche und die Breitensuche im Mittelpunkt.
+Zusätzlich werden bipartite Graphen sowie azyklische Digraphen betrachtet.
+
+Die Ausarbeitung basiert auf \cite{hougardy2018}.
+
+\section{Grundbegriffe}
+
+\begin{definition}
+Ein \textbf{Graph} ist ein Paar
+\[
+G=(V,E),
+\]
+wobei
+\begin{itemize}
+    \item \(V\) eine endliche Menge von Knoten ist,
+    \item \(E \subseteq \{\{u,v\}\mid u,v\in V,\ u\neq v\}\)
+    die Menge der Kanten ist.
+\end{itemize}
+\end{definition}
+
+\begin{beispiel}
+Betrachte den folgenden Graphen:
+
+\begin{center}
+\begin{tikzpicture}[scale=1.2]
+
+\node[circle,draw] (A) at (0,0) {A};
+\node[circle,draw] (B) at (2,1) {B};
+\node[circle,draw] (C) at (2,-1) {C};
+\node[circle,draw] (D) at (4,0) {D};
+
+\draw (A)--(B);
+\draw (A)--(C);
+\draw (B)--(D);
+\draw (C)--(D);
+
+\end{tikzpicture}
+\end{center}
+
+Es gilt:
+\[
+V=\{A,B,C,D\},
+\]
+\[
+E=\{\{A,B\},\{A,C\},\{B,D\},\{C,D\}\}.
+\]
+\end{beispiel}
+
+\begin{definition}
+\begin{itemize}
+    \item Ein \textbf{Weg} ist eine Folge von Knoten, bei der aufeinanderfolgende Knoten durch Kanten verbunden sind.
+    \item Ein \textbf{Kreis} ist ein geschlossener Weg.
+    \item Ein Graph heißt \textbf{zusammenhängend}, wenn zwischen je zwei Knoten ein Weg existiert.
+\end{itemize}
+\end{definition}
+
+\begin{definition}
+Ein \textbf{gerichteter Graph} (Digraph) besteht aus:
+\[
+G=(V,E),
+\]
+wobei
+\[
+E\subseteq V\times V.
+\]
+
+Die Kanten besitzen also eine Richtung.
+\end{definition}
+
+\section{Tiefensuche}
+
+Die Tiefensuche (\textit{Depth First Search}, DFS) gehört zu den grundlegenden Graphenalgorithmen.
+
+Die Idee besteht darin, möglichst tief in den Graphen vorzudringen, bevor zurückgegangen wird.
+
+\begin{beispiel}
+
+\begin{center}
+\begin{tikzpicture}[scale=1.1]
+
+\node[circle,draw] (A) at (0,0) {A};
+\node[circle,draw] (B) at (2,1) {B};
+\node[circle,draw] (C) at (2,-1) {C};
+\node[circle,draw] (D) at (4,1) {D};
+\node[circle,draw] (E) at (4,-1) {E};
+
+\draw (A)--(B);
+\draw (A)--(C);
+\draw (B)--(D);
+\draw (C)--(E);
+
+\end{tikzpicture}
+\end{center}
+
+Eine mögliche DFS-Reihenfolge lautet:
+\[
+A,B,D,C,E.
+\]
+
+\end{beispiel}
+
+\begin{algorithmus}
+Eingabe:
+Graph \(G=(V,E)\), Startknoten \(s\)
+
+Ausgabe:
+Alle von \(s\) erreichbaren Knoten
+
+\begin{align*}
+&\text{markiere } s \\
+&\textbf{for alle Nachbarn } v \textbf{ von } s \textbf{ do} \\
+&\qquad \textbf{if } v \text{ unmarkiert } \textbf{ then} \\
+&\qquad\qquad DFS(v)
+\end{align*}
+
+\end{algorithmus}
+
+\begin{satz}
+Die Tiefensuche besitzt Laufzeit
+\[
+O(|V|+|E|).
+\]
+\end{satz}
+
+\begin{proof}
+Jeder Knoten wird höchstens einmal besucht.
+Außerdem wird jede Kante höchstens zweimal betrachtet.
+
+Damit ist die Gesamtzahl der Operationen proportional zu
+\[
+|V|+|E|.
+\]
+\end{proof}
+
+\begin{satz}
+Die Tiefensuche besucht genau die Knoten der Zusammenhangskomponente des Startknotens.
+\end{satz}
+
+\begin{proof}
+DFS besucht nur Knoten, die über einen Weg vom Startknoten erreichbar sind.
+
+Sei umgekehrt \(v\) erreichbar.
+Dann existiert ein Weg
+\[
+s=v_0,v_1,\dots,v_k=v.
+\]
+
+Da DFS rekursiv alle Kanten verfolgt, werden nacheinander alle Knoten dieses Weges besucht.
+Insbesondere wird somit auch \(v\) besucht.
+\end{proof}
+
+\section{Breitensuche}
+
+Die Breitensuche (\textit{Breadth First Search}, BFS) durchsucht den Graphen schichtweise.
+
+Zunächst werden alle Nachbarn des Startknotens besucht, danach die Nachbarn dieser Knoten usw.
+
+Dabei verwendet BFS eine Queue.
+
+\begin{beispiel}
+
+\begin{center}
+\begin{tikzpicture}[scale=1.1]
+
+\node[circle,draw] (A) at (0,0) {A};
+
+\node[circle,draw] (B) at (2,1.5) {B};
+\node[circle,draw] (C) at (2,0) {C};
+\node[circle,draw] (D) at (2,-1.5) {D};
+
+\node[circle,draw] (E) at (4,1) {E};
+\node[circle,draw] (F) at (4,-1) {F};
+
+\draw (A)--(B);
+\draw (A)--(C);
+\draw (A)--(D);
+\draw (B)--(E);
+\draw (D)--(F);
+
+\end{tikzpicture}
+\end{center}
+
+Die BFS-Ebenen lauten:
+\[
+\{A\},\{B,C,D\},\{E,F\}.
+\]
+
+\end{beispiel}
+
+\begin{algorithmus}
+
+Eingabe:
+Graph \(G=(V,E)\), Startknoten \(s\)
+
+Ausgabe:
+Distanzen aller erreichbaren Knoten
+
+\begin{align*}
+&\text{markiere } s \\
+&Q\leftarrow \{s\} \\
+&\textbf{while } Q\neq\emptyset \textbf{ do} \\
+&\qquad u\leftarrow \text{erstes Element von } Q \\
+&\qquad \textbf{for alle Nachbarn } v \textbf{ von } u \textbf{ do} \\
+&\qquad\qquad \textbf{if } v \text{ unmarkiert } \textbf{ then} \\
+&\qquad\qquad\qquad \text{markiere } v \\
+&\qquad\qquad\qquad Q\leftarrow Q\cup\{v\}
+\end{align*}
+
+\end{algorithmus}
+
+\begin{satz}
+Die Breitensuche berechnet in ungewichteten Graphen kürzeste Wege vom Startknoten zu allen erreichbaren Knoten.
+\end{satz}
+
+\begin{proof}
+BFS arbeitet schichtweise.
+
+Ebene \(k\) enthält genau die Knoten mit Distanz \(k\) vom Startknoten.
+
+Alle Knoten einer Ebene werden vollständig bearbeitet, bevor Knoten der nächsten Ebene betrachtet werden.
+
+Somit wird jeder Knoten zuerst über einen kürzesten Weg erreicht.
+\end{proof}
+
+\begin{satz}
+Die Breitensuche besitzt Laufzeit
+\[
+O(|V|+|E|).
+\]
+\end{satz}
+
+\begin{proof}
+Wie bei der Tiefensuche wird jeder Knoten höchstens einmal besucht und jede Kante höchstens zweimal betrachtet.
+
+Daher ergibt sich insgesamt Laufzeit
+\[
+O(|V|+|E|).
+\]
+\end{proof}
+
+\section{Bipartite Graphen}
+
+\begin{definition}
+Ein Graph heißt \textbf{bipartit}, wenn sich die Knotenmenge in zwei disjunkte Mengen
+\[
+V_1,V_2
+\]
+zerlegen lässt, sodass jede Kante einen Knoten aus \(V_1\) mit einem Knoten aus \(V_2\) verbindet.
+\end{definition}
+
+\begin{beispiel}
+
+\begin{center}
+\begin{tikzpicture}[scale=1]
+
+\node[circle,draw] (A) at (0,2) {A};
+\node[circle,draw] (B) at (0,0) {B};
+
+\node[circle,draw] (C) at (4,3) {C};
+\node[circle,draw] (D) at (4,1.5) {D};
+\node[circle,draw] (E) at (4,0) {E};
+
+\draw (A)--(C);
+\draw (A)--(D);
+\draw (B)--(D);
+\draw (B)--(E);
+
+\end{tikzpicture}
+\end{center}
+
+Hier gilt:
+\[
+V_1=\{A,B\},
+\qquad
+V_2=\{C,D,E\}.
+\]
+
+\end{beispiel}
+
+\begin{satz}
+Ein Graph ist genau dann bipartit, wenn er keinen ungeraden Kreis enthält.
+\end{satz}
+
+\begin{proof}
+Sei zunächst \(G\) bipartit mit Zerlegung
+\[
+V=V_1\cup V_2.
+\]
+
+Beim Durchlaufen eines Kreises wechselt man nach jeder Kante zwischen \(V_1\) und \(V_2\).
+
+Somit besitzt jeder Kreis gerade Länge.
+
+Also existiert kein ungerader Kreis.
+
+\vspace{0.5em}
+
+Sei umgekehrt \(G\) ein Graph ohne ungeraden Kreis.
+
+Wähle einen Startknoten \(s\).
+
+Definiere:
+\[
+V_1=\{\text{Knoten mit gerader Distanz zu } s\},
+\]
+\[
+V_2=\{\text{Knoten mit ungerader Distanz zu } s\}.
+\]
+
+Existierte eine Kante innerhalb einer Klasse, entstünde ein ungerader Kreis.
+
+Folglich ist \(G\) bipartit.
+\end{proof}
+
+\begin{algorithmus}
+(BFS-basierter Bipartitheitstest)
+
+\begin{align*}
+&\text{Färbe den Startknoten rot} \\
+&\text{Starte BFS} \\
+&\text{Alle Nachbarn erhalten die andere Farbe} \\
+&\text{Treten zwei benachbarte Knoten gleicher Farbe auf,} \\
+&\text{so ist der Graph nicht bipartit.}
+\end{align*}
+
+\end{algorithmus}
+
+\section{Azyklische Digraphen}
+
+\begin{definition}
+Ein gerichteter Graph heißt \textbf{azyklisch}, wenn er keinen gerichteten Kreis enthält.
+\end{definition}
+
+Solche Graphen heißen auch DAGs
+(\textit{Directed Acyclic Graphs}).
+
+\begin{beispiel}
+
+\begin{center}
+\begin{tikzpicture}[>=latex]
+
+\node[circle,draw] (A) at (0,0) {A};
+\node[circle,draw] (B) at (2,1) {B};
+\node[circle,draw] (C) at (2,-1) {C};
+\node[circle,draw] (D) at (4,0) {D};
+
+\draw[->] (A)--(B);
+\draw[->] (A)--(C);
+\draw[->] (B)--(D);
+\draw[->] (C)--(D);
+
+\end{tikzpicture}
+\end{center}
+
+\end{beispiel}
+
+\begin{definition}
+Eine \textbf{topologische Sortierung} eines DAGs ist eine Anordnung der Knoten
+\[
+v_1,v_2,\dots,v_n,
+\]
+sodass für jede gerichtete Kante
+\[
+(v_i,v_j)
+\]
+gilt:
+\[
+i<j.
+\]
+\end{definition}
+
+Typische Anwendungen sind:
+
+\begin{itemize}
+    \item Projektplanung,
+    \item Scheduling,
+    \item Compilerbau,
+    \item Abhängigkeitsanalysen.
+\end{itemize}
+
+\begin{satz}
+Jeder azyklische Digraph besitzt eine topologische Sortierung.
+\end{satz}
+
+\begin{proof}
+In jedem DAG existiert mindestens ein Knoten ohne eingehende Kante.
+
+Entfernt man diesen Knoten, bleibt wieder ein DAG zurück.
+
+Durch wiederholtes Entfernen solcher Knoten entsteht eine topologische Ordnung.
+\end{proof}
+
+\newpage
+
+\printbibliography[heading=bibintoc]
+
+\end{document}
