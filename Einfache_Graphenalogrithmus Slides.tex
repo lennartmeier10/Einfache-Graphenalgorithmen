@@ -1,0 +1,378 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bbm}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{graphicx}
+\usepackage{csquotes}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
+\newcommand{\N}{\mathbbm{N}} %natürliche Zahlen
+\newcommand{\Z}{\mathbbm{Z}} %ganze Zahlem
+\newcommand{\R}{\mathbb{R}} %relle Zahlen
+\newtheorem{satz}{Satz}
+\newtheorem{algorithmus}{Algorithmus}
+\newtheorem{korollar}{Korollar}
+\title{Einfache Graphenalgorithmen}
+\subtitle{Proseminar Kombinatorik}
+\author{Lennart Meier}
+\date{26.05.2026}
+\begin{document}
+\begin{frame}
+\titlepage
+\end{frame}
+\begin{frame}{Gliederung}
+\tableofcontents
+\end{frame}
+\section{Einleitung}
+\begin{frame}{Anwendung}
+Graphen gehören zu den wichtigsten Strukturen der Mathematik und Informatik.
+\vspace{0.4cm}
+Anwendungen:
+\begin{itemize}
+    \item Straßennetze und Bahnnetze
+    \item soziale Netzwerke
+    \item Kommunikationsnetze
+    \item Suchmaschinen
+    \item Projektplanung
+\end{itemize}
+\vspace{0.4cm}
+Zentrale Fragen:
+\begin{itemize}
+    \item Welche Knoten sind erreichbar?
+    \item Wie findet man kürzeste Wege?
+    \item Ist ein Graph bipartit?
+    \item Enthält ein Digraph Kreise?
+\end{itemize}
+\end{frame}
+\section{Grundbegriffe}
+\begin{frame}{Definition eines Graphen}
+\begin{definition}
+Ein Graph ist ein Paar
+\[G=(V,E),\]
+wobei
+\begin{itemize}
+    \item \(V\) eine endliche Menge von Knoten ist,
+    \item \(E\) eine Menge von Kanten ist.
+\end{itemize}
+\end{definition}
+\vspace{0.4cm}
+Bei ungerichteten Graphen besitzt jede Kante die Form
+\[\{u,v\}.\]
+Bei gerichteten Graphen verwendet man geordnete Paare
+\[(u,v).\]
+\end{frame}
+\begin{frame}{Beispiel eines Graphen}
+\begin{center}
+\begin{tikzpicture}[scale=1.2]
+\node[circle,draw] (A) at (0,0) {A};
+\node[circle,draw] (B) at (2,1) {B};
+\node[circle,draw] (C) at (2,-1) {C};
+\node[circle,draw] (D) at (4,0) {D};
+\draw (A)--(B);
+\draw (A)--(C);
+\draw (B)--(D);
+\draw (C)--(D);
+\end{tikzpicture}
+\end{center}
+\vspace{0.3cm}
+\[V=\{A,B,C,D\}\]
+\[E=\{\{A,B\},\{A,C\},\{B,D\},\{C,D\}\}\]
+\end{frame}
+\begin{frame}{Wege und Kreise}
+\begin{definition}
+\begin{itemize}
+    \item Ein Weg ist eine Folge von Knoten, bei der aufeinanderfolgende Knoten durch Kanten verbunden sind.  
+    \item Ein Kreis ist ein geschlossener Weg.   
+    \item Ein Graph heißt zusammenhängend, wenn zwischen je zwei Knoten ein Weg existiert.
+\end{itemize}
+\end{definition}
+\end{frame}
+\section{Graphendurchmusterung}
+\begin{frame}{Idee der Graphendurchmusterung}
+Ziel:
+\begin{itemize}
+    \item Bestimme alle von einem Startknoten erreichbaren Knoten.
+\end{itemize}
+\vspace{0.4cm}
+Dabei entstehen:
+\begin{itemize}
+    \item eine Menge erreichbarer Knoten \(R\)
+    \item ein Suchbaum \(F\)
+\end{itemize}
+\vspace{0.4cm}
+Grundlage vieler Algorithmen:
+\begin{itemize}
+    \item DFS
+    \item BFS
+    \item Komponentenzerlegung
+    \item Kürzeste Wege
+\end{itemize}
+\end{frame}
+\begin{frame}{Algorithmus zur Graphendurchmusterung}
+\begin{algorithmus}
+Eingabe: ein Graph \(G\), ein Knoten \(r \in V(G)\)
+Ausgabe: die Menge \(R \subseteq V(G)\) der von \(r\) aus erreichbaren Knoten und eine Menge \(F \subseteq E(G)\), sodass \((R,F)\) ein Baum beziehungsweise eine Arboreszenz mit Wurzel \(r\) ist.
+\begin{align*}
+&R \leftarrow \{r\},\quad Q \leftarrow \{r\},\quad F \leftarrow \emptyset\\
+&\textbf{while } Q \neq \emptyset \textbf{ do}\\
+&\qquad \text{Wähle ein } v \in Q\\
+&\qquad \textbf{if } \exists e=(v,w)\in \delta_G^+(v)\\
+&\qquad\qquad \text{mit } w\in V(G)\setminus R\\
+&\qquad \textbf{then } R\leftarrow R\cup\{w\}\\
+&\qquad\qquad Q\leftarrow Q\cup\{w\}\\
+&\qquad\qquad F\leftarrow F\cup\{e\}\\
+&\qquad \textbf{else } Q\leftarrow Q\setminus\{v\}
+\end{align*}
+\end{algorithmus}
+\end{frame}
+\begin{frame}{Korrektheit und Laufzeit}
+\begin{satz}
+Der Algorithmus arbeitet korrekt und besitzt Laufzeit
+\[O(n+m),\]
+wobei
+\[n=|V(G)|,\qquad m=|E(G)|.\]
+\end{satz}
+\vspace{0.4cm}
+\begin{proof}
+\begin{itemize}
+    \item Jeder Knoten wird höchstens einmal eingefügt.
+    \item Jede Kante wird höchstens zweimal betrachtet.
+    \item Dadurch ergibt sich lineare Laufzeit.
+    \item Am Ende enthält \(R\) genau alle erreichbaren Knoten.
+\end{itemize}
+\end{proof}
+\end{frame}
+\section{Tiefensuche}
+\begin{frame}{Definition der Tiefensuche}
+\begin{definition}
+Wählt man in der Menge \(Q\) stets den zuletzt hinzugefügten Knoten aus, so erhält man die Tiefensuche beziehungsweise DFS (\emph{Depth First Search}).
+\end{definition}
+\vspace{0.5cm}
+Prinzip:
+\begin{quote}
+Gehe möglichst tief in den Graphen.
+\end{quote}
+\vspace{0.4cm}
+DFS verwendet einen Stack.
+\end{frame}
+\begin{frame}{Beispiel zur Tiefensuche}
+\begin{center}
+\begin{tikzpicture}[scale=1.1]
+\node[circle,draw] (A) at (0,0) {A};
+\node[circle,draw] (B) at (2,1) {B};
+\node[circle,draw] (C) at (2,-1) {C};
+\node[circle,draw] (D) at (4,1) {D};
+\node[circle,draw] (E) at (4,-1) {E};
+\draw (A)--(B);
+\draw (A)--(C);
+\draw (B)--(D);
+\draw (C)--(E);
+\end{tikzpicture}
+\end{center}
+\vspace{0.3cm}
+Mögliche DFS-Reihenfolge:
+\[A,B,D,C,E\]
+\end{frame}
+\begin{frame}{Anwendungen der Tiefensuche}
+DFS wird verwendet für:
+\begin{itemize}
+    \item Zusammenhangsprobleme
+    \item Kreissuche
+    \item Komponentenzerlegung
+    \item topologische Sortierung
+    \item Labyrinthsuche
+    \item Dateisysteme
+\end{itemize}
+\end{frame}
+\section{Breitensuche}
+\begin{frame}{Definition der Breitensuche}
+\begin{definition}
+Wählt man in der Menge \(Q\) stets den zuerst hinzugefügten Knoten aus, so erhält man die Breitensuche beziehungsweise BFS (\emph{Breadth First Search}).
+\end{definition}
+\vspace{0.5cm}
+Prinzip:
+\begin{quote}
+Durchsuche den Graphen schichtweise.
+\end{quote}
+\vspace{0.4cm}
+BFS verwendet eine Queue.
+\end{frame}
+\begin{frame}{Beispiel zur Breitensuche}
+\begin{center}
+\begin{tikzpicture}[scale=1.1]
+\node[circle,draw] (A) at (0,0) {A};
+\node[circle,draw] (B) at (2,1.5) {B};
+\node[circle,draw] (C) at (2,0) {C};
+\node[circle,draw] (D) at (2,-1.5) {D};
+\node[circle,draw] (E) at (4,1) {E};
+\node[circle,draw] (F) at (4,-1) {F};
+\draw (A)--(B);
+\draw (A)--(C);
+\draw (A)--(D);
+\draw (B)--(E);
+\draw (D)--(F);
+\end{tikzpicture}
+\end{center}
+\vspace{0.3cm}
+BFS-Ebenen:
+\[\{A\},\{B,C,D\},\{E,F\}\]
+\end{frame}
+\begin{frame}{Kürzeste Wege}
+Für zwei Knoten \(v,w\) bezeichnet
+\[dist(v,w)\]
+die Länge eines kürzesten Weges.
+\vspace{0.5cm}
+\begin{satz}
+Jeder BFS-Baum enthält einen kürzesten Weg vom Startknoten \(r\) zu allen erreichbaren Knoten.
+\end{satz}
+\end{frame}
+\begin{frame}{Beweisidee}
+\begin{proof}
+\begin{itemize}
+    \item BFS arbeitet schichtweise.
+    \item Zunächst werden alle Knoten mit Distanz \(1\) besucht.
+    \item Danach alle Knoten mit Distanz \(2\) usw.
+    \item Ein Knoten wird daher erstmals über einen kürzesten Weg erreicht.
+\end{itemize}
+\end{proof}
+\end{frame}
+\begin{frame}{Laufzeit der Breitensuche}
+\begin{satz}
+Die Werte
+\[dist(r,v)\]
+können für alle Knoten \(v\) in linearer Zeit bestimmt werden.
+\end{satz
+\vspace{0.4cm}
+\begin{proof}
+\begin{itemize}
+    \item Jeder Knoten wird höchstens einmal besucht.
+    \item Jede Kante wird höchstens zweimal betrachtet.
+    \item Daher beträgt die Laufzeit
+    \[ O(n+m).\]
+\end{itemize}
+\end{proof}
+\end{frame}
+\section{Bipartite Graphen}
+\begin{frame}{Definition bipartiter Graphen}
+\begin{definition}
+Eine Bipartition eines Graphen besteht aus zwei disjunkten Mengen
+\[A,B\]
+mit
+\[A\cup B=V(G),\]
+sodass jede Kante genau einen Endknoten in \(A\) besitzt.
+\end{definition}
+\vspace{0.4cm}
+Ein Graph heißt bipartit, falls er eine Bipartition besitzt.
+\end{frame}
+\begin{frame}{Beispiel eines bipartiten Graphen}
+\begin{center}
+\begin{tikzpicture}[scale=1]
+\node[circle,draw] (A) at (0,2) {A};
+\node[circle,draw] (B) at (0,0) {B};
+\node[circle,draw] (C) at (4,3) {C};
+\node[circle,draw] (D) at (4,1.5) {D};
+\node[circle,draw] (E) at (4,0) {E};
+\draw (A)--(C);
+\draw (A)--(D);
+\draw (B)--(D);
+\draw (B)--(E);
+\end{tikzpicture}
+\end{center}
+\[A=\{A,B\},
+\qquad
+B=\{C,D,E\}\]
+\end{frame}
+\begin{frame}{Charakterisierung}
+\begin{definition}
+Ein ungerader Kreis ist ein Kreis ungerader Länge.
+\end{definition}
+\vspace{0.4cm}
+\begin{satz}[König]
+Ein ungerichteter Graph ist genau dann bipartit, wenn er keinen ungeraden Kreis enthält.
+\end{satz}
+\end{frame}
+\begin{frame}{Beweisidee}
+\begin{proof}
+\begin{itemize}
+    \item In bipartiten Graphen wechselt man entlang jeder Kante die Klasse.
+    \item Deshalb besitzen alle Kreise gerade Länge.
+    \item umgekehrt zerlegt BFS die Knoten in gerade und ungerade Ebenen.
+    \item Eine Kante innerhalb einer Ebene würde einen ungeraden Kreis erzeugen.
+\end{itemize}
+\end{proof}
+\end{frame}
+\section{Azyklische Digraphen}
+\begin{frame}{Definition azyklischer Digraphen}
+\begin{definition}
+Ein Digraph heißt azyklisch, falls er keinen gerichteten Kreis enthält.
+\end{definition}
+\vspace{0.5cm}
+Solche Graphen heißen auch:
+\[\text{DAG}\]
+(\emph{Directed Acyclic Graphs})
+\end{frame}
+\begin{frame}{Topologische Ordnung}
+\begin{definition}
+Eine topologische Ordnung eines Digraphen ist eine Reihenfolge
+\[v_1,\dots,v_n,\]
+sodass für jede Kante
+\[(v_i,v_j)\]
+gilt:
+\[i<j.\]
+\end{definition}
+\end{frame}
+\begin{frame}{Lemma}
+\begin{lemma}
+Ist \(G\) ein Digraph mit
+\[\delta^+(v)\neq\emptyset\]
+für alle \(v\in V(G)\), so kann man in
+\[O(|V(G)|)\]
+Zeit einen Kreis finden.
+\end{lemma}
+\end{frame}
+\begin{frame}{Beweisidee}
+\begin{proof}
+\begin{itemize}
+    \item Starte in einem beliebigen Knoten.
+    \item Folge immer einer ausgehenden Kante
+    \item Da der Graph endlich ist, wird irgendwann ein Knoten doppelt besucht.
+    \item Dadurch entsteht ein Kreis.
+\end{itemize}
+\end{proof}
+\end{frame}
+\begin{frame}{Topologische Ordnung und DAG}
+\begin{satz}
+Ein Digraph besitzt genau dann eine topologische Ordnung, wenn er azyklisch ist.
+\end{satz}
+\end{frame}
+\begin{frame}{Beweisidee}
+\begin{proof}
+\begin{itemize}
+    \item In einer topologischen Ordnung wächst die Nummerierung entlang jeder Kante.
+    \item Deshalb kann kein gerichteter Kreis existieren.
+    \item Umgekehrt entfernt man wiederholt Knoten ohne ausgehende Kanten.
+    \item Dadurch entsteht eine topologische Ordnung.
+\end{itemize}
+\end{proof}
+\end{frame}
+\section{Fazit}
+\begin{frame}{Zusammenfassung}
+\begin{itemize}
+    \item Graphendurchmusterung ist Grundlage vieler Verfahren.
+    \item DFS und BFS besitzen Laufzeit
+    \[O(n+m).\]
+    \item BFS berechnet kürzeste Wege.
+    \item Bipartite Graphen enthalten keine ungeraden Kreise.
+    \item DAGs besitzen topologische Ordnungen.
+\end{itemize}
+\end{frame}
+\begin{frame}{Vielen Dank!}
+Vielen Dank für eure Aufmerksamkeit!
+\vspace{1cm}
+Fragen?
+\end{frame}
+\end{document}
